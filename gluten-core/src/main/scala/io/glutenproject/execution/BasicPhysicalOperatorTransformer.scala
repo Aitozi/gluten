@@ -461,6 +461,12 @@ case class ProjectExecTransformer(projectList: Seq[NamedExpression],
     }
   }
 
+  /**
+   * Comment by Aitozi.
+   * Why is this not been executed?
+   * Because it will merged to a whole stage exec. so the doExecuteColumnar will not be invoked.
+   * @return
+   */
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     throw new UnsupportedOperationException(s"This operator doesn't support doExecuteColumnar().")
   }
