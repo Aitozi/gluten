@@ -143,6 +143,11 @@ abstract class FilterExecBaseTransformer(condition: Expression,
 
   def doTransform(context: SubstraitContext): TransformContext
 
+  /**
+   * Comment by Aitozi.
+   * Why this transformer not supported doExecuteColumnar ?
+   * @return
+   */
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     throw new UnsupportedOperationException(s"This operator doesn't support doExecuteColumnar().")
   }

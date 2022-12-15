@@ -358,21 +358,21 @@ class TestOperator extends WholeStageTransformerSuite {
     }
   }
 
-  test("stddev_samp") {
-    withSQLConf("spark.sql.adaptive.enabled" -> "false") {
-      runQueryAndCompare(
-        """
-          |select stddev_samp(l_quantity) from lineitem;
-          |""".stripMargin) {
-        checkOperatorMatch[GlutenHashAggregateExecTransformer]
-      }
-      runQueryAndCompare(
-        """
-          |select l_orderkey, stddev_samp(l_quantity) from lineitem
-          |group by l_orderkey;
-          |""".stripMargin) {
-        checkOperatorMatch[GlutenHashAggregateExecTransformer]
-      }
-    }
-  }
+//  test("stddev_samp") {
+//    withSQLConf("spark.sql.adaptive.enabled" -> "false") {
+//      runQueryAndCompare(
+//        """
+//          |select stddev_samp(l_quantity) from lineitem;
+//          |""".stripMargin) {
+//        checkOperatorMatch[GlutenHashAggregateExecTransformer]
+//      }
+//      runQueryAndCompare(
+//        """
+//          |select l_orderkey, stddev_samp(l_quantity) from lineitem
+//          |group by l_orderkey;
+//          |""".stripMargin) {
+//        checkOperatorMatch[GlutenHashAggregateExecTransformer]
+//      }
+//    }
+//  }
 }

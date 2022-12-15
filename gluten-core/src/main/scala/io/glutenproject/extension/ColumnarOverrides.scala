@@ -165,6 +165,14 @@ case class TransformPreOverrides() extends Rule[SparkPlan] {
             replaceWithTransformerPlan(plan.child)
           }
         logDebug(s"Columnar Processing for ${plan.getClass} is currently supported.")
+
+        /**
+         * Comment by Aitozi
+         *
+         * It's different from the above ProjectExecTransformer.
+         * It use the backend api to generate FilterExecTransformer.
+         * Because, different backend have different extension for transformer.
+         */
         BackendsApiManager.getSparkPlanExecApiInstance
           .genFilterExecTransformer(plan.condition, newChild)
       case plan: HashAggregateExec =>

@@ -320,6 +320,12 @@ case class WholeStageTransformerExec(child: SparkPlan)(val transformStageId: Int
        *      GlutenDataFrameAggregateSuite) in these cases, separate RDDs takes care of SCAN as a
        *      result, genFinalStageIterator rather than genFirstStageIterator will be invoked
        */
+      /**
+       * 可能dag中没有scan节点，比如测试集中只有一个小的数据集
+       * genFirstStageIterator vs genFinalStageIterator
+       * first 表示自己就是以scan开头的
+       * final 表示依赖其他的scan节点
+       */
       val startTime = System.nanoTime()
       val resCtx = doWholestageTransform()
 

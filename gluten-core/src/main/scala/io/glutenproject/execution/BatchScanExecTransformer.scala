@@ -89,6 +89,10 @@ class BatchScanExecTransformer(output: Seq[AttributeReference], @transient scan:
 
   override def supportsColumnar(): Boolean = GlutenConfig.getConf.enableColumnarIterator
 
+  /**
+   * doExecuteColumnar 和 columnarInputRDDs 有什么区别？
+   * @return
+   */
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     doExecuteColumnarInternal()
   }

@@ -51,6 +51,12 @@ trait BasicScanExecTransformer extends TransformSupport {
     val numOutputVectors = longMetric("outputVectors")
     val scanTime = longMetric("scanTime")
     val substraitContext = new SubstraitContext
+
+    /**
+     * Comment by Aitozi.
+     * generate relNode for the filter expr in this basic scan
+     * Then use this to genNativeFileScanRDD
+     */
     val transformContext = doTransform(substraitContext)
     val outNames = new java.util.ArrayList[String]()
     for (attr <- outputAttributes()) {
@@ -113,6 +119,17 @@ trait BasicScanExecTransformer extends TransformSupport {
     }
   }
 
+  /**
+   * Comment by Aitozi.
+   * why here have two api ? Maybe
+   * 1. doTransform is transform to substrait plan
+   * 2. doExecuteColumnarInternal is the spark internal transformation. it will invoke the doTransform to get the
+   * transformation from its node information. You can see it in method doExecuteColumnarInternal
+   *
+   * spark will invoke the doExecuteColumnarInternal
+   * @param context
+   * @return
+   */
   override def doTransform(context: SubstraitContext): TransformContext = {
     val output = outputAttributes()
     val typeNodes = ConverterUtils.getTypeNodeFromAttributes(output)
