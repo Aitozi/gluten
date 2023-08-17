@@ -61,6 +61,7 @@ class FileSourceScanExecTransformer(
     dataFilters,
     tableIdentifier,
     disableBucketedScan)
+  // NOTE: 这个trait定义了native transform相关的接口, 具体见TransformSupport
   with BasicScanExecTransformer {
 
   // Note: "metrics" is made transient to avoid sending driver-side metrics to tasks.

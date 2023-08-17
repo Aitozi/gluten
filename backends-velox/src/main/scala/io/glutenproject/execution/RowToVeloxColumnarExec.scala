@@ -115,6 +115,8 @@ case class RowToVeloxColumnarExec(child: SparkPlan)
                 Math.min(sizeInBytes.toDouble * numRows * 1.2, 31760L * numRows),
                 sizeInBytes.toDouble * 10)
               arrowBuf = allocator.buffer(estimatedBufSize.toLong)
+              // 这直接把unsafe row的内存内容copy到了arrow buf中?
+              // 这兼容吗, 不是应该转换成arrow的格式吗?
               Platform.copyMemory(
                 row.getBaseObject,
                 row.getBaseOffset,

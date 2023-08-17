@@ -101,6 +101,7 @@ public class LocalFilesNode implements Serializable {
   public ReadRel.LocalFiles toProtobuf() {
     ReadRel.LocalFiles.Builder localFilesBuilder = ReadRel.LocalFiles.newBuilder();
     // The input is iterator, and the path is in the format of: Iterator:index.
+    //
     if (iterAsInput && paths.size() > 0) {
       ReadRel.LocalFiles.FileOrFiles.Builder fileBuilder =
           ReadRel.LocalFiles.FileOrFiles.newBuilder();

@@ -62,6 +62,7 @@ trait TransformSupport extends GlutenPlan {
 
   def getStreamedLeafPlan: SparkPlan
 
+  // 将当前的SparkPlan节点, 转化成Substrait中的Rel节点, 返回一个context
   def doTransform(context: SubstraitContext): TransformContext = {
     throw new UnsupportedOperationException(
       s"This operator doesn't support doTransform with SubstraitContext.")
@@ -245,6 +246,7 @@ case class WholeStageTransformer(child: SparkPlan)(val transformStageId: Int)
           "The partition length of all the scan transformer are not the same.")
       }
       val startTime = System.nanoTime()
+      //NOTE: 在WholeStageTransformer#doExecuteColumnar 中触发这个部分的transform构建, 才开始递归构建子图
       val wsCxt = doWholeStageTransform()
 
       // the file format for each scan exec

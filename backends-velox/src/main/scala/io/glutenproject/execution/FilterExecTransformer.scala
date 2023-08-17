@@ -74,6 +74,9 @@ case class FilterExecTransformer(condition: Expression, child: SparkPlan)
     } else {
       // This means the input is just an iterator, so an ReadRel will be created as child.
       // Prepare the input schema.
+      // NOTE: 如果input是空, 那么生成一个ReadRel
+      // 这个ReadRel怎么知道从哪里读取呢? 怎么知道去哪里加载数据呢?
+      // 这种算子前面应该插入了 c2r 和 r2c的算子了吧?
       val attrList = new util.ArrayList[Attribute](child.output.asJava)
       getRelNode(
         context,

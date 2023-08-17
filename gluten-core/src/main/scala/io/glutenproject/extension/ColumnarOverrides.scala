@@ -276,12 +276,14 @@ case class TransformPreOverrides(isAdaptiveContext: Boolean)
               return shj.withNewChildren(shj.children.map(replaceWithTransformerPlan))
             }
           case p =>
+            // 对于不支持的type, 转化child
             return p.withNewChildren(p.children.map(replaceWithTransformerPlan))
         }
     }
     plan match {
       case plan: BatchScanExec =>
         applyScanTransformer(plan)
+      // PR: 这个分支感觉可以移除掉
       case plan: FileSourceScanExec =>
         applyScanTransformer(plan)
       case plan: CoalesceExec =>
@@ -531,8 +533,10 @@ case class TransformPreOverrides(isAdaptiveContext: Boolean)
    */
   def applyScanTransformer(plan: SparkPlan): SparkPlan = plan match {
     case plan: FileSourceScanExec =>
+      // QUE: 为什么这里还涉及dpp的优化呢?
       val newPartitionFilters =
         ExpressionConverter.transformDynamicPruningExpr(plan.partitionFilters, reuseSubquery)
+      // NOTE: gluten 中转化出的节点是自定义的transformer节点, 这个节点一样继承自SparkPlan
       val transformer = new FileSourceScanExecTransformer(
         plan.relation,
         plan.output,
@@ -716,6 +720,7 @@ case class ColumnarOverrideRules(session: SparkSession)
         (spark: SparkSession) => PlanOneRowRelation(spark),
         (_: SparkSession) => FallbackEmptySchemaRelation(),
         (_: SparkSession) => AddTransformHintRule(),
+        // 转化规则
         (_: SparkSession) => TransformPreOverrides(this.isAdaptiveContext),
         (s: SparkSession) => GlutenFallbackReporter(GlutenConfig.getConf, s),
         (_: SparkSession) => RemoveTransformHintRule(),
@@ -730,10 +735,12 @@ case class ColumnarOverrideRules(session: SparkSession)
       (s: SparkSession) => TransformPostOverrides(s, this.isAdaptiveContext),
       (s: SparkSession) => VanillaColumnarPlanOverrides(s)) :::
       BackendsApiManager.getSparkPlanExecApiInstance.genExtendedColumnarPostRules() :::
+      //IMP:  ColumnarCollapseTransformStages 将多个连在一起的TransformSupport节点合并成一个WholeStageTransformer
       List((_: SparkSession) => ColumnarCollapseTransformStages(GlutenConfig.getConf)) :::
       SparkUtil.extendedColumnarRules(session, GlutenConfig.getConf.extendedColumnarPostRules)
 
   override def preColumnarTransitions: Rule[SparkPlan] = plan =>
+    // 半函数
     PhysicalPlanSelector.maybe(session, plan) {
       var overridden: SparkPlan = plan
       val startTime = System.nanoTime()
@@ -753,8 +760,10 @@ case class ColumnarOverrideRules(session: SparkSession)
       logOnLevel(
         transformPlanLogLevel,
         s"preColumnarTransitions preOverriden plan:\n${plan.toString}")
+      // 遍历规则进行转化
       preOverrides().foreach {
         r =>
+          // 转化完成之后还是SparkPlan
           overridden = r(session)(overridden)
           planChangeLogger.logRule(r(session).ruleName, plan, overridden)
       }
@@ -823,6 +832,7 @@ case class ColumnarOverrideRules(session: SparkSession)
    * ColumnarToRowExecs where needed.
    */
   def insertTransitions(plan: SparkPlan, outputsColumnar: Boolean): SparkPlan = {
+    // 这里如果只是为了fallback
     if (outputsColumnar) {
       insertRowToColumnar(plan)
     } else if (plan.supportsColumnar) {
@@ -843,8 +853,10 @@ case class ColumnarOverrideRules(session: SparkSession)
 
   override def postColumnarTransitions: Rule[SparkPlan] = plan =>
     PhysicalPlanSelector.maybe(session, plan) {
+      // 全部回滚
       if (fallbackPolicy == "query" && !isAdaptiveContext && fallbackWholeQuery(plan)) {
         logWarning("Fall back to run the query due to unsupported operator!")
+        // QUE: 全部回滚的场景下为什么还需要insert transitions呢
         insertTransitions(originalPlan, false)
       } else if (fallbackPolicy == "stage" && isAdaptiveContext && fallbackWholeStage(plan)) {
         logWarning("Fall back the plan due to meeting the whole stage fallback threshold!")
@@ -873,6 +885,7 @@ case class ColumnarOverrideRules(session: SparkSession)
 
 object ColumnarOverrides extends GlutenSparkExtensionsInjector {
   override def inject(extensions: SparkSessionExtensions): Unit = {
+    // SparSession => ColumnRule 的映射
     extensions.injectColumnar(ColumnarOverrideRules)
   }
 }

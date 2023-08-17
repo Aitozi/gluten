@@ -138,6 +138,7 @@ private[glutenproject] class GlutenDriverPlugin extends DriverPlugin with Loggin
 
   def setPredefinedConfigs(sc: SparkContext, conf: SparkConf): Unit = {
     // extensions
+    // plugin 主要是会设置session extension 设置为Gluten extension
     val extensions = if (conf.contains(SPARK_SESSION_EXTS_KEY)) {
       s"${conf.get(SPARK_SESSION_EXTS_KEY)},$GLUTEN_SESSION_EXTENSION_NAME"
     } else {
